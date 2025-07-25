@@ -1,6 +1,18 @@
 import React from 'react';
-import { Modal, View, Text, TouchableOpacity, FlatList, Image, StyleSheet, Dimensions } from 'react-native';
+import {
+    Modal,
+    View,
+    Text,
+    TouchableOpacity,
+    FlatList,
+    Image,
+    StyleSheet,
+    Dimensions,
+    Alert,
+} from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import * as FileSystem from 'expo-file-system';
+import * as MediaLibrary from 'expo-media-library';
 
 const numColumns = 3;
 const ITEM_SIZE = Math.floor(Dimensions.get('window').width / numColumns) - 24;
@@ -12,30 +24,89 @@ function getFileName(item) {
     if (item.uri && typeof item.uri === 'string') return item.uri.split('/').pop() || 'Attachment';
     return 'Attachment';
 }
-export default function AttachmentDrawer({ visible, onClose, attachments, theme, onAttachmentPress }) {
-    const renderItem = ({ item }) => {
-        const uri = (item && (item.uri || (typeof item === 'string' ? item : null))) || '';
-const isImage = typeof uri === 'string' && /\.(jpg|jpeg|png|gif|webp)$/i.test(uri);
-const isAudio = typeof uri === 'string' && /\.(m4a|mp3|wav)$/i.test(uri);
-        const ext = getFileName(item).split('.').pop().toLowerCase();
+
+export default function AttachmentDrawer({
+    visible,
+    onClose,
+    attachments = [],
+    theme,
+    onAttachmentPress,
+}) {
+    const handleDownload = async (uri, name) => {
+        try {
+            const { status } = await MediaLibrary.requestPermissionsAsync();
+            if (status !== 'granted') {
+                Alert.alert('Permission Denied', 'Storage permission is required to save files.');
+                return;
+            }
+            const localUri = FileSystem.documentDirectory + name;
+            const downloadRes = await FileSystem.downloadAsync(uri, localUri);
+            const asset = await MediaLibrary.createAssetAsync(downloadRes.uri);
+            const albums = await MediaLibrary.getAlbumsAsync();
+            let album = albums.find(alb => alb.title === 'Karyah Downloads');
+            if (!album) {
+                await MediaLibrary.createAlbumAsync('Karyah Downloads', asset, false);
+            } else {
+                await MediaLibrary.addAssetsToAlbumAsync([asset], album.id, false);
+            }
+            Alert.alert('Success', 'File downloaded successfully!');
+        } catch (err) {
+            console.error('Download failed:', err);
+            Alert.alert('Error', 'Download failed.');
+        }
+    };
+
+    const renderItem = ({ item, index }) => {
+        const uri =
+            (item && (item.uri || (typeof item === 'string' ? item : null))) || '';
+        const name = getFileName(item);
+        const isImage =
+            typeof uri === 'string' && /\.(jpg|jpeg|png|gif|webp)$/i.test(uri);
+        const isAudio =
+            typeof uri === 'string' && /\.(m4a|mp3|wav)$/i.test(uri);
+        const ext = name.split('.').pop()?.toLowerCase();
 
         return (
-            <TouchableOpacity style={styles.item} onPress={() => onAttachmentPress(item)}>
-                {isImage ? (
-                    <Image source={{ uri }} style={styles.image} />
-                ) : (
-                    <View style={styles.iconBox}>
-                        {isAudio ? (
-                            <Feather name="play-circle" size={36} color={theme.primary} />
-                        ) : ext === 'pdf' ? (
-                            <Feather name="file-text" size={36} color={theme.primary} />
+            <View style={styles.item}>
+                <View style={styles.attachmentBox}>
+                    {/* Preview tap */}
+                    <TouchableOpacity
+                        activeOpacity={0.8}
+                        onPress={() => onAttachmentPress(item)}
+                        style={styles.previewTapper}
+                    >
+                        {isImage ? (
+                            <Image source={{ uri }} style={styles.image} />
                         ) : (
-                            <Feather name="file" size={36} color={theme.primary} />
+                            <View style={styles.iconBox}>
+                                {isAudio ? (
+                                    <Feather name="play-circle" size={36} color={theme.primary} />
+                                ) : ext === 'pdf' ? (
+                                    <Feather name="file-text" size={36} color={theme.primary} />
+                                ) : (
+                                    <Feather name="file" size={36} color={theme.primary} />
+                                )}
+                            </View>
                         )}
-                    </View>
-                )}
-                <Text style={[styles.label, { color: theme.text }]} numberOfLines={2}>{getFileName(item)}</Text>
-            </TouchableOpacity>
+                    </TouchableOpacity>
+                    {/* Download icon overlay (top-right) */}
+                    <TouchableOpacity
+                        // small extra space to make it easier to hit
+                        hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}
+                        style={[
+                            styles.downloadIcon,
+                            { backgroundColor: 'rgba(0,0,0,0.4)' },
+                        ]}
+                        onPress={() => handleDownload(uri, name)}
+                    >
+                        <Feather name="download" size={16} color="#fff" />
+                    </TouchableOpacity>
+                </View>
+
+                <Text style={[styles.label, { color: theme.text }]} numberOfLines={2}>
+                    {name}
+                </Text>
+            </View>
         );
     };
 
@@ -49,6 +120,7 @@ const isAudio = typeof uri === 'string' && /\.(m4a|mp3|wav)$/i.test(uri);
                             <Feather name="x" size={28} color={theme.text} />
                         </TouchableOpacity>
                     </View>
+
                     <FlatList
                         data={attachments}
                         numColumns={numColumns}
@@ -67,8 +139,42 @@ const styles = StyleSheet.create({
     sheet: { borderTopLeftRadius: 18, borderTopRightRadius: 18, padding: 16, minHeight: 340, maxHeight: '70%' },
     header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
     title: { fontSize: 18, fontWeight: '700' },
+
     item: { width: ITEM_SIZE, alignItems: 'center', marginBottom: 18, marginHorizontal: 6 },
-    image: { width: ITEM_SIZE - 12, height: ITEM_SIZE - 12, borderRadius: 10, backgroundColor: '#eee' },
-    iconBox: { width: ITEM_SIZE - 12, height: ITEM_SIZE - 12, borderRadius: 10, backgroundColor: '#f3f3f3', alignItems: 'center', justifyContent: 'center' },
+
+    attachmentBox: {
+        position: 'relative',
+        width: ITEM_SIZE - 12,
+        height: ITEM_SIZE - 12,
+    },
+    previewTapper: {
+        width: '100%',
+        height: '100%',
+    },
+
+    image: {
+        width: '100%',
+        height: '100%',
+        borderRadius: 10,
+        backgroundColor: '#eee',
+    },
+    iconBox: {
+        width: '100%',
+        height: '100%',
+        borderRadius: 10,
+        backgroundColor: '#f3f3f3',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+
+    downloadIcon: {
+        position: 'absolute',
+        top: 4,
+        right: 4,
+        padding: 4,
+        borderRadius: 12,
+        zIndex: 2,
+    },
+
     label: { fontSize: 12, marginTop: 6, width: ITEM_SIZE - 12, textAlign: 'center' },
 });

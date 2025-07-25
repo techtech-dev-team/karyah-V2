@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, View, Text, TouchableOpacity, Image, ActivityIndicator, StyleSheet, Linking } from 'react-native';
+import { Modal, View, Text, TouchableOpacity, Image, ActivityIndicator, StyleSheet, Linking, Alert } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { Audio } from 'expo-av';
+import * as FileSystem from 'expo-file-system';
+import * as MediaLibrary from 'expo-media-library';
 
 function getFileName(item) {
     if (!item) return '';
@@ -21,8 +23,6 @@ export default function AttachmentPreviewModal({ visible, onClose, attachment, t
     const isImage = typeof uri === 'string' && /\.(jpg|jpeg|png|gif|webp)$/i.test(uri);
     const isAudio = typeof uri === 'string' && /\.(m4a|mp3|wav)$/i.test(uri);
 
-    // ...rest of your code...
-    // ✅ Unload audio on unmount
     useEffect(() => {
         return () => {
             if (sound) {
@@ -56,6 +56,42 @@ export default function AttachmentPreviewModal({ visible, onClose, attachment, t
         }
     };
 
+    const handleDownload = async () => {
+        try {
+            const { status } = await MediaLibrary.requestPermissionsAsync();
+            if (status !== 'granted') {
+                Alert.alert('Permission Denied', 'Media library permission is required to save files.');
+                return;
+            }
+
+            const fileName = getFileName(attachment);
+            const localUri = FileSystem.documentDirectory + fileName;
+
+            // Download the file to local storage
+            const downloadRes = await FileSystem.downloadAsync(uri, localUri);
+
+            // Create asset from downloaded file
+            const asset = await MediaLibrary.createAssetAsync(downloadRes.uri);
+
+            // Check if album exists
+            const albums = await MediaLibrary.getAlbumsAsync();
+            let album = albums.find(alb => alb.title === 'Karyah Downloads');
+
+            if (!album) {
+                // If not, create new album with asset
+                await MediaLibrary.createAlbumAsync('Karyah Downloads', asset, false);
+            } else {
+                // If yes, add asset to the album
+                await MediaLibrary.addAssetsToAlbumAsync([asset], album.id, false);
+            }
+
+            Alert.alert('Success', 'File downloaded successfully!');
+        } catch (error) {
+            console.error('Download failed:', error);
+            Alert.alert('Error', 'Failed to download file.');
+        }
+    };
+
     return (
         <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
             <View style={styles.bg}>
@@ -68,7 +104,9 @@ export default function AttachmentPreviewModal({ visible, onClose, attachment, t
                     </View>
 
                     {!attachment ? (
-                        <Text style={{ color: theme.text, textAlign: 'center', marginTop: 40 }}>No attachment to preview</Text>
+                        <Text style={{ color: theme.text, textAlign: 'center', marginTop: 40 }}>
+                            No attachment to preview
+                        </Text>
                     ) : isImage ? (
                         <TouchableOpacity style={{ alignItems: 'center', marginVertical: 20 }} onPress={() => onImagePress(uri)}>
                             {loading && (
@@ -108,10 +146,15 @@ export default function AttachmentPreviewModal({ visible, onClose, attachment, t
                             <Text style={{ color: theme.primary, marginTop: 10 }}>Open File</Text>
                         </TouchableOpacity>
                     )}
+
                     {attachment && (
-                        <Text style={{ color: theme.text, marginTop: 16, textAlign: 'center' }}>
-                            {getFileName(attachment)}
-                        </Text>
+                        <View style={{ marginTop: 16, alignItems: 'center' }}>
+                            <Text style={{ color: theme.text, textAlign: 'center' }}>{getFileName(attachment)}</Text>
+                            <TouchableOpacity onPress={handleDownload} style={{ marginTop: 10, flexDirection: 'row', alignItems: 'center' }}>
+                                <Feather name="download" size={20} color={theme.primary} />
+                                <Text style={{ color: theme.primary, marginLeft: 6 }}>Download</Text>
+                            </TouchableOpacity>
+                        </View>
                     )}
                 </View>
             </View>
