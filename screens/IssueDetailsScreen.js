@@ -318,6 +318,20 @@ export default function IssueDetailsScreen({ navigation, route }) {
                     </View>
                 </LinearGradient>
                 <FieldBox
+                    label="Project Name"
+                    value={issue.projectName || ''}
+                    placeholder="Project Name"
+                    theme={theme}
+                    editable={false}
+                />
+                <FieldBox
+                    label="Location"
+                    value={issue.projectLocation || ''}
+                    placeholder="Location"
+                    theme={theme}
+                    editable={false}
+                />
+                <FieldBox
                     label="Description"
                     value={isEditing ? editFields.description : issue.description}
                     placeholder="Description"
