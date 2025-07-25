@@ -154,21 +154,21 @@ export default function IssueDetailsScreen({ navigation, route }) {
                                         setLoading(true);
                                         // Prepare update payload, separating new files and existing URLs
                                         let assignedUserId = '';
-if (issue.assignTo) {
-    // If assignTo is an object, get userId or id property
-    if (typeof issue.assignTo === 'object' && (issue.assignTo.userId || issue.assignTo.id)) {
-        assignedUserId = String(issue.assignTo.userId || issue.assignTo.id);
-    } else if (typeof issue.assignTo === 'number' || /^\d+$/.test(issue.assignTo)) {
-        assignedUserId = String(issue.assignTo);
-    }
-}
-// Only send assignTo if it's a valid integer string
-let updatePayload = {
-    issueId: issue.issueId,
-    issueTitle: editFields.issueTitle.trim() || undefined,
-    description: editFields.description.trim() || undefined,
-    dueDate: editFields.dueDate || undefined,
-    ...(assignedUserId ? { assignTo: assignedUserId } : {}),
+                                        if (issue.assignTo) {
+                                            // If assignTo is an object, get userId or id property
+                                            if (typeof issue.assignTo === 'object' && (issue.assignTo.userId || issue.assignTo.id)) {
+                                                assignedUserId = String(issue.assignTo.userId || issue.assignTo.id);
+                                            } else if (typeof issue.assignTo === 'number' || /^\d+$/.test(issue.assignTo)) {
+                                                assignedUserId = String(issue.assignTo);
+                                            }
+                                        }
+                                        // Only send assignTo if it's a valid integer string
+                                        let updatePayload = {
+                                            issueId: issue.issueId,
+                                            issueTitle: editFields.issueTitle.trim() || undefined,
+                                            description: editFields.description.trim() || undefined,
+                                            dueDate: editFields.dueDate || undefined,
+                                            ...(assignedUserId ? { assignTo: assignedUserId } : {}),
                                             // You can add assignTo, isCritical, issueStatus, remarks, removeImages, removeResolvedImages if needed
                                         };
 

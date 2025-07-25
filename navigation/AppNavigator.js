@@ -23,11 +23,12 @@ import NotificationScreen from 'screens/NotificationScreen';
 import AuthLoadingScreen from 'screens/AuthLoadingScreen';
 import UpdateTaskScreen from 'screens/UpdateTaskScreen';
 import RegistrationForm from 'screens/RegistrationForm';
+import { navigationRef } from './navigationRef';
 const Stack = createNativeStackNavigator();
 
 export default function AppNavigator() {
   return (
-    <NavigationContainer>
+    <NavigationContainer ref={navigationRef}>
       <Stack.Navigator initialRouteName="AuthLoading" screenOptions={{ headerShown: false }}>
         <Stack.Screen name="AuthLoading" component={AuthLoadingScreen} />
         <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />

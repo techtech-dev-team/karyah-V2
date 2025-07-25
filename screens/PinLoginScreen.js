@@ -114,7 +114,7 @@ export default function PinLoginScreen({ navigation }) {
                     inputLabel="Enter PIN :" // <-- Make sure this is set!
                     footerText="Forgot PIN?"
                     footerLinkText="Go back to OTP login"
-                    onFooterLinkPress={() => navigation.goBack()}
+                    onFooterLinkPress={() => navigation.replace('Login')}
                     forceStep={step}
                     setStep={setStep}
                     showStepFlow={true}

@@ -1,9 +1,8 @@
 import { useEffect } from 'react';
 import { PermissionsAndroid, Platform } from 'react-native';
-import * as Notifications from 'expo-notifications';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { PermissionStatus } from 'expo-modules-core';
 import messaging from '@react-native-firebase/messaging';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { navigationRef } from '../navigation/navigationRef'; // adjust the path
 
 const API_URL = 'https://api.karyah.in/';
 
@@ -68,8 +67,62 @@ async function getFCMTokenAndRegister() {
   }
 }
 
+function handleNotificationNavigation(data) {
+  if (!data || !data.type) return;
+
+  switch (data.type) {
+    case 'project':
+      if (data.projectId) {
+        navigationRef.navigate('ProjectDetailsScreen', {
+          projectId: data.projectId,
+        });
+      }
+      break;
+    case 'task':
+      if (data.taskId) {
+        navigationRef.navigate('TaskDetails', {
+          taskId: data.taskId,
+        });
+      }
+      break;
+    case 'issue':
+      if (data.issueId) {
+        navigationRef.navigate('IssueDetails', {
+          issueId: data.issueId,
+        });
+      }
+      break;
+    default:
+      console.warn('📬 Unknown notification type:', data.type);
+  }
+}
+
 export default function usePushNotifications() {
   useEffect(() => {
     getFCMTokenAndRegister();
+
+    // Background state
+    messaging().onNotificationOpenedApp(remoteMessage => {
+      console.log('🔄 Notification tapped (background):', remoteMessage);
+      handleNotificationNavigation(remoteMessage?.data);
+    });
+
+    // Quit state
+    messaging()
+      .getInitialNotification()
+      .then(remoteMessage => {
+        if (remoteMessage) {
+          console.log('📲 Notification caused app to open from quit state:', remoteMessage);
+          handleNotificationNavigation(remoteMessage?.data);
+        }
+      });
+
+    // Foreground handling
+    const unsubscribe = messaging().onMessage(async remoteMessage => {
+      console.log('📥 Foreground notification:', remoteMessage);
+      // Optional: In-app alert or badge logic here
+    });
+
+    return unsubscribe;
   }, []);
 }
