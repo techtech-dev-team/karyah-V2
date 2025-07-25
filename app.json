@@ -1,0 +1,76 @@
+{
+  "expo": {
+    "name": "Karyah:",
+    "slug": "karyahapp",
+    "version": "1.0.1",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/Slice 1.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.piyushkatole16.karyah",
+      "config": {
+        "usesNonExemptEncryption": false
+      },
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSPhotoLibraryUsageDescription": "This app requires access to your photo library to allow photo selection and uploads.",
+        "NSCameraUsageDescription": "This app requires access to the camera to allow photo and video capture.",
+        "NSMicrophoneUsageDescription": "This app requires access to the microphone for recording audio.",
+        "NSPhotoLibraryAddUsageDescription": "This app requires permission to save photos and videos to your library.",
+        "NSDocumentsFolderUsageDescription": "This app requires access to your documents for file uploads and access.",
+        "NSUserNotificationUsageDescription": "Karyah needs permission to send you important alerts and updates.",
+        "UIBackgroundModes": [
+          "fetch"
+        ]
+      }
+    },
+    "android": {
+      "googleServicesFile": "./google-services.json",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.techtech.karyah",
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
+      ]
+    },
+    "web": {
+      "bundler": "metro"
+    },
+    "experiments": {
+      "tsconfigPaths": true
+    },
+    "plugins": [
+      "expo-font",
+      "expo-audio",
+      "expo-notifications",
+      "expo-build-properties"
+    ],
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "316eb6dd-efd2-4ac6-8f1c-ca44de2cb821"
+      }
+    },
+    "owner": "dhavalpawar15"
+  }
+}
