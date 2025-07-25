@@ -4,18 +4,20 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import * as Location from 'expo-location';
 import { useState } from 'react';
 import {
-    Alert,
-    Image,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  Alert,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import { registerUser } from '../utils/auth';
+import { createProject } from '../utils/project';
+import { createWorklist } from '../utils/worklist';
 
 export default function RegistrationForm({ route, navigation }) {
   const user = route?.params?.user || {};
@@ -53,6 +55,14 @@ export default function RegistrationForm({ route, navigation }) {
         pin: form.pin,
       });
       await AsyncStorage.setItem('token', data.token);
+      // Auto-create default project and worklist
+      const token = data.token;
+      const defaultProject = await createProject({
+        projectName: 'Default Project',
+        description: 'Auto-created project for new user',
+        // Add other required fields if needed
+      });
+      await createWorklist(defaultProject.id, 'Default Worklist', token);
       Alert.alert('Success', 'Profile updated successfully!');
       navigation.navigate('Home');
     } catch (error) {
