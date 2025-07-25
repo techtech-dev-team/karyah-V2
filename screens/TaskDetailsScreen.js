@@ -1235,6 +1235,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         gap: 6,
+        alignSelf: 'flex-start',
     },
     backText: {
         fontSize: 18,
